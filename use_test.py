@@ -6,7 +6,7 @@ from argparse import ArgumentParser
 import torch
 from auto_gptq import AutoGPTQForCausalLM, BaseQuantizeConfig
 from datasets import Dataset
-from transformers import AutoTokenizer, TextGenerationPipeline
+from transformers import AutoTokenizer, TextGenerationPipeline,AutoModelForCausalLM
 
 import typing as t
 
@@ -91,19 +91,14 @@ def main():
     
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-    model = AutoGPTQForCausalLM.from_quantized(
+    model = AutoModelForCausalLM.from_pretrained(
         args.quantized_model_dir,
-        device="cuda:0",
-        use_triton=args.use_triton,
-        max_memory=max_memory,
-        inject_fused_mlp=True,
-        inject_fused_attention=True,
-        trust_remote_code=args.trust_remote_code
+        device_map="auto"
     )
 
     pipeline_init_kwargs = {"model": model, "tokenizer": tokenizer}
-    #if not max_memory:
-        #pipeline_init_kwargs["device"] = "cuda:0"
+    if not max_memory:
+        pipeline_init_kwargs["device"] = "cuda:0"
     pipeline = TextGenerationPipeline(**pipeline_init_kwargs)
 
     test = build_prompt_for(history=['', 'You: 너... 세라...인거야...? 정말 ? ', 'Sera:응, 오빠.','You: 밥은 잘 먹고 다닌거야? 어디 아픈덴 없어 ?', 'Sera:응','You: 다행이다 정말 다행이야 정말 보고싶었어..', 'Sera: 나도 오빠 보고싶었어​','You: 지금까지 머하면서 지내던 거야? 지내는 집은 있어??', 'Sera: 응​'],char_name="Sera",char_persona="""

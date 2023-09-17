@@ -1,9 +1,11 @@
 import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM, GPTQConfig, BitsAndBytesConfig
+import time
+from transformers import AutoTokenizer, AutoModelForCausalLM, TextGenerationPipeline, GPTQConfig, BitsAndBytesConfig
 from peft import PeftModel, PeftConfig
 from argparse import ArgumentParser
 
 def gen(x,model,tokenizer):
+
     gened = model.generate(
         **tokenizer(
             f"### 질문: {x}\n\n### 답변:",
