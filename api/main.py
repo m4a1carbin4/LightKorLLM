@@ -3,18 +3,18 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(os.path.dirname(
     os.path.abspath(os.path.dirname(__file__)))+"/lib")
-
-from flask_restx import Api, Resource
-from flask import Flask, request
-from peft import PeftModel, PeftConfig
-from transformers import AutoTokenizer, AutoModelForCausalLM, TextGenerationPipeline, GPTQConfig, BitsAndBytesConfig
-import torch
-from argparse import ArgumentParser
-import json
-import random
-import time
-from GPTmodel import AutoGPTQ
 from Infer import Infer
+from GPTmodel import AutoGPTQ
+import time
+import random
+import json
+from argparse import ArgumentParser
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, TextGenerationPipeline, GPTQConfig, BitsAndBytesConfig
+from peft import PeftModel, PeftConfig
+from flask_ngrok2 import run_with_ngrok
+from flask import Flask, request
+from flask_restx import Api, Resource
 
 def main():
 
@@ -43,6 +43,8 @@ def main():
                        early_stopping=args.early_stopping, max_history=args.max_history)
 
     app = Flask(__name__)
+    run_with_ngrok(
+        app=app, auth_token='1umfu85e4o3OQdknLh3w9ojZXFD_84u1iPX21iTH4Avtzkh9g')
     api = Api(app)
 
     @api.route('/inferWeb')
