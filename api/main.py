@@ -3,10 +3,10 @@ import sys
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(os.path.dirname(
     os.path.abspath(os.path.dirname(__file__)))+"/lib")
+
 from Infer import Infer
 from GPTmodel import AutoGPTQ
-import time
-import random
+from controll import apiControll
 import json
 from argparse import ArgumentParser
 import torch
@@ -33,6 +33,8 @@ def main():
                         help="whether use early_stopping")
     parser.add_argument("--port", type=int, default=5989,
                         help="api server port (default 5989)")
+    parser.add_argument("--ngrock", action="store_true",
+                        help="whether use ngrock")
 
     args = parser.parse_args()
 
@@ -43,28 +45,15 @@ def main():
                        early_stopping=args.early_stopping, max_history=args.max_history)
 
     app = Flask(__name__)
-    run_with_ngrok(
-        app=app, auth_token='1umfu85e4o3OQdknLh3w9ojZXFD_84u1iPX21iTH4Avtzkh9g')
+
+    if args.ngrock:
+        run_with_ngrok(app=app, auth_token='1umfu85e4o3OQdknLh3w9ojZXFD_84u1iPX21iTH4Avtzkh9g')
+    
     api = Api(app)
 
-    @api.route('/inferWeb')
-    class inferweb(Resource):
+    apiControll(api=api,infer=main_infer)
 
-        def post(self):
-
-            input_str = request.json.get("inputString")
-
-            history = request.json.get("history")
-
-            result_str, result_history = main_infer.text_gen(
-                input_str=input_str, history=history)
-
-            return {
-                "result": result_str,
-                "history": result_history
-            }
-
-    app.run(debug=True, host='0.0.0.0', port=args.port)
+    app.run(debug=True, host='0.0.0.0', port=args.port,use_reloader=False)
 
 
 if __name__ == "__main__":
