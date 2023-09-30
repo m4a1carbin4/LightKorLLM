@@ -23,7 +23,12 @@ class Infer:
 
         return (gened[0])
 
-    def __history_appender(self, history: dict):
+    def __history_appender(self, history: dict, instruction: dict):
+
+        if instruction :
+            instruction_str = instruction["command"] + "\n"
+        else:
+            instruction_str = ""
 
         current_count = history["count"]
 
@@ -35,6 +40,8 @@ class Infer:
 
         infer_str = ""
 
+        infer_str = instruction_str + infer_str
+
         for obj in history_tmp:
 
             infer_str += f"\n\n {obj['type']}: {obj['str']}"
@@ -45,8 +52,8 @@ class Infer:
 
         history_tmp = history["history"]
 
-        history_tmp.append({'type': "human", 'str': input_str})
-        history_tmp.append({'type': "Assistent", 'str': gen_str})
+        history_tmp.append({'type': "### 사용자", 'str': input_str})
+        history_tmp.append({'type': "### AI", 'str': gen_str})
 
         history["history"] = history_tmp
 
@@ -54,11 +61,11 @@ class Infer:
 
         return history
 
-    def text_gen(self, input_str, history: dict):
+    def text_gen(self, data:dict):
 
-        infer_str = self.__history_appender(history=history)
+        infer_str = self.__history_appender(history=data["history"],instruction=data["instruction"])
 
-        infer_str += f"\n\n human: {input_str} \n\n Assistent: "
+        infer_str += f"\n\n### 사용자: {data['input']}\n\n### AI:"
 
         gen_token = self.__infer_gen(infer_str)
 
@@ -68,6 +75,6 @@ class Infer:
 
         gen_str = gen_str[len(infer_str):]
 
-        history = self.__history_adder(input_str, gen_str, history)
+        history = self.__history_adder(data['input'], gen_str, history)
 
         return gen_str, history
