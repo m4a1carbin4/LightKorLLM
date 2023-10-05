@@ -8,11 +8,11 @@
 
 ## 프로젝트 개요
 
-LightKorLLM 프로젝트는 일반 상용 그래픽 카드 (RTX 30시리즈, GTX 16시리즈 등)에서 사용 가능한 LLM 프로젝트를 목표로 만들어 졌으며, 소규모 개인 프로젝트 또는 학부 프로젝트 내부에서 활용 가능하도록 파이썬 Flask 서버 형태의 백엔드 서버 또한 제공합니다. 
+LightKorLLM 프로젝트는 일반 상용 그래픽 카드 (RTX 30시리즈, GTX 16시리즈 등)에서 사용할 수 있는 LLM 프로젝트를 목표로 만들어졌으며, 소규모 개인 프로젝트 또는 학부 프로젝트 내부에서 활용할 수 있도록 파이선 Flask 서버 형태의 백엔드 서버 또한 제공합니다. 
 
 ## AutoGPTQ 양자화 및 PEFT 학습 스크립트
 
-LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 AutoGPTQ 를 통해 양자화 하여 사용하는것을 전제로 하고 있으며, 또한 이렇게 양자화 된 LLM 모듈들에 대해 PEFT 방식의 파인튜닝을 위한 스크립트 또한 제공하고 있습니다.
+LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 AutoGPTQ 를 통해 양자화하여 사용하는 것을 전제로 하고 있으며, 또한 이렇게 양자화된 LLM 모듈들에 대해 PEFT 방식의 파인튜닝을 위한 스크립트 또한 제공하고 있습니다.
 
 - 해당 스크립트들은 script 경로상에서 확인 가능합니다.
     - script / local
@@ -30,7 +30,7 @@ LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 Auto
     - 베이스 모델 : [heegyu/llama-2-ko-7b-chat](https://huggingface.co/heegyu/llama-2-ko-7b-chat)
     - 4bit 양자화, 모델 로드시 5GB, inference시 최대 7GB VRAM 사용.
         - max_token 128 설정상에서 테스트 된 내용으로 실제 환경에 따라 차이 존재 가능.
-- 이외 추가 모델 양자화 및 테스트를 거쳐 리스트 추가될 예정, 스크립트를 사용하여 직접 원하는 모델 양자화후 사용 또한 가능.
+- 이외 추가 모델 양자화 및 테스트를 거쳐 리스트 추가될 예정, 스크립트를 사용하여 직접 원하는 모델 양자화 후 사용 또한 가능.
 
 ## Flask API Server
 
@@ -90,7 +90,7 @@ LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 Auto
 
 ### base
 
-해당 API 서버는 LLM 모델을 통해 텍스트를 생성하고 생성된 텍스트를 반환 하는 일련의 절차를 진행 합니다.
+해당 API 서버는 LLM 모델을 통해 텍스트를 생성하고 생성된 텍스트를 반환하는 일련의 절차를 진행합니다.
 
 ### LLM Inference
 
