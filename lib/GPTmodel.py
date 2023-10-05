@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*- 
+
 from transformers import AutoTokenizer, AutoModelForCausalLM
 from peft import PeftModel, PeftConfig
 
