@@ -92,6 +92,10 @@ LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 Auto
 
 해당 API 서버는 LLM 모델을 통해 텍스트를 생성하고 생성된 텍스트를 반환하는 일련의 절차를 진행합니다.
 
+서버 설치와 관련된 사항의 경우 python 3.8.16 버전 이상에서 동작하는것을 권장하며.
+
+필요한 라이브러리의 경우 requirements.txt 를 통해 확인 가능합니다.
+
 ### LLM Inference
 
 > 해당 내용에 대한 더 상세한 코드는 lib/Infer.py 내부에서 확인 가능.
@@ -117,7 +121,7 @@ ex : 당신은 AI 챗봇입니다. 사용자에게 도움이 되고 유익한 �
 
 ### API call :
 
-- HTTP POST : http://server/inferweb
+- HTTP POST : http://server/inferweb : 사용자 요청에 대해 일반적인 텍스트 생성 형태로 리턴.
     - requst body :
         
         ```json
@@ -151,7 +155,7 @@ ex : 당신은 AI 챗봇입니다. 사용자에게 도움이 되고 유익한 �
         
     - result : inference 결과 생성된 답변.
     - history: 사용자 입력과 해당 입력 결과에 대한 답변.
-- HTTP POST : http://server/chatweb
+- HTTP POST : http://server/chatweb : 사용자와 AI 간 채팅 형태(과거 대화 내역 사용)로 텍스트 생성. 
     - request body:
         - 1st request
         
@@ -247,6 +251,18 @@ ex : 당신은 AI 챗봇입니다. 사용자에게 도움이 되고 유익한 �
     - result : inference 결과 생성된 답변.
     - history: 사용자 입력과 해당 입력에 대한 AI 생성 답변을 순차적으로 기록한 리스트.
 
+### Future improvement
+
+텍스트 클래시피 케이션 (텍스트 감정 분류 등) 지원 추가 예정.
+
+현재 양자화 작업 완료된 모델 이외에도 더 많은 모델들에 대한 양자화 진행 예정.
+
+기타 추가 문의 및 건의 사항의 경우 이슈탭 또는 m4a1carbin4@gmail.com 으로 연락 부탁드립니다.
+
 ### License
 
-해당 프로젝트는 오픈소스이며 별도의 수정 및 활용에 제약은 없습니다만. 출처 표기는 확실히 부탁드립니다.
+해당 프로젝트는 아파치 2.0라이선스를 가집니다. 
+
+오픈소스 형태로 배포하기에 별도의 수정 및 활용에 제약은 없습니다만. 
+
+출처 또는 원본 표기는 확실히 부탁드립니다.
