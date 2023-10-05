@@ -1,11 +1,36 @@
+from transformers import StoppingCriteria, StoppingCriteriaList
+import torch
+
+class StoppingCriteriaSub(StoppingCriteria):
+
+    def __init__(self, stops = [], encounters=1):
+        super().__init__()
+        self.stops = [stop for stop in stops]
+
+    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
+        for stop in self.stops:
+            if torch.all((stop == input_ids[0][-len(stop):])).item():
+                return True
+
+        return False
+
 class Infer:
 
-    def __init__(self, model, tokenizer, max_new_tokens, early_stopping, max_history):
+    def __init__(self, model, tokenizer, max_new_tokens, early_stopping, max_history, num_beams, human_str, ai_str, stop_str, device):
         self.model = model
         self.tokenizer = tokenizer
         self.max_new_token = max_new_tokens
         self.early_stopping = early_stopping
         self.max_history = max_history
+        self.num_beams = num_beams
+        self.human_str = human_str
+        self.ai_str = ai_str
+        self.device = device
+
+        stop_words = [stop_str]
+
+        stop_words_ids = [self.tokenizer(stop_word, return_tensors='pt').to(self.device)['input_ids'].squeeze()[1:] for stop_word in stop_words]
+        self.stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=stop_words_ids)])
 
     def __infer_gen(self, x):
 
@@ -14,9 +39,11 @@ class Infer:
                 x,
                 return_tensors='pt',
                 return_token_type_ids=False
-            ).to('cuda'),
+            ).to(self.device),
             max_new_tokens=self.max_new_token,
+            num_beams=self.num_beams,
             early_stopping=self.early_stopping,
+            stopping_criteria=self.stopping_criteria,
             do_sample=True,
             eos_token_id=2,
         )
@@ -47,25 +74,50 @@ class Infer:
             infer_str += f"\n\n {obj['type']}: {obj['str']}"
 
         return infer_str
+    
+    def __instruction_appender(self, instruction: dict):
+
+        
+        instruction_str = instruction["command"] + "\n"
+
+        infer_str = ""
+
+        infer_str = instruction_str + infer_str
+
+        return infer_str
 
     def __history_adder(self, input_str, gen_str, history):
 
         history_tmp = history["history"]
 
-        history_tmp.append({'type': "### 사용자", 'str': input_str})
-        history_tmp.append({'type': "### AI", 'str': gen_str})
+        history_tmp.append({'type': self.human_str, 'str': input_str})
+        history_tmp.append({'type': self.ai_str, 'str': gen_str})
 
         history["history"] = history_tmp
 
         history["count"] += 1
 
         return history
+    
+    def __infer_return(self, input_str, gen_str):
+        
+        result_tmp = []
 
-    def text_gen(self, data:dict):
+        result_tmp.append({'type': self.human_str, 'str': input_str})
+        result_tmp.append({'type': self.ai_str, 'str': gen_str})
 
-        infer_str = self.__history_appender(history=data["history"],instruction=data["instruction"])
+        history = {"history":result_tmp}
 
-        infer_str += f"\n\n### 사용자: {data['input']}\n\n### AI:"
+        return history
+
+    def text_gen(self, data:dict,type:str):
+
+        if type == "chat":
+            infer_str = self.__history_appender(history=data["history"],instruction=data["instruction"])
+        elif type == "infer":
+            infer_str = self.__instruction_appender(instruction=data["instruction"])
+
+        infer_str += f"\n\n{self.human_str}: {data['input']}\n\n{self.ai_str}:"
 
         gen_token = self.__infer_gen(infer_str)
 
@@ -73,8 +125,17 @@ class Infer:
 
         print(gen_str)
 
-        gen_str = gen_str[len(infer_str):]
+        gen_str = gen_str.replace("<s> "+infer_str,'')
+        gen_str = gen_str.replace("</s>",'')
 
-        history = self.__history_adder(data['input'], gen_str, history)
+        if type == "infer":
 
-        return gen_str, history
+            history = self.__infer_return(data['input'], gen_str)
+
+            return gen_str, history
+        
+        else :
+
+            history = self.__history_adder(data['input'], gen_str, data["history"])
+
+            return gen_str, history
