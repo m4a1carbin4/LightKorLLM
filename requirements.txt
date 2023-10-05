@@ -1,0 +1,11 @@
+optimum==1.13.1
+Flask==2.3.3
+flask-ngrok2==0.2.4
+flask-restx==1.1.0
+datasets==2.14.5
+huggingface-hub==0.16.4
+transformers==4.33.1
+peft==0.5.0
+accelerate==0.22.0
+--extra-index-url https://huggingface.github.io/autogptq-index/whl/cu118/
+auto-gptq==0.4.2
