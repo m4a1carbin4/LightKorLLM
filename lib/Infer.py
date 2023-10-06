@@ -9,7 +9,7 @@ class StoppingCriteriaSub(StoppingCriteria):
         super().__init__()
         self.stops = [stop for stop in stops]
 
-    def __call__(self, input_ids: torch.LongTensor, scores: torch.FloatTensor):
+    def __call__(self, input_ids:torch.LongTensor, scores:torch.FloatTensor):
         for stop in self.stops:
             if torch.all((stop == input_ids[0][-len(stop):])).item():
                 return True
