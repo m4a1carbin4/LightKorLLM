@@ -35,6 +35,18 @@ LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 Auto
 ## Flask API Server
 
 - 양자화된 LLM 모델을 좀더 쉽게 사용하기 위해 작성된 소규모 AI 백엔드 서버 프로젝트.
+
+- 서버 환경설정 :
+    python 3.8.16 이상 사용 권장.
+
+    cuda 11.8 사용 권장.
+
+    의존성 설치 :
+    ```bash
+    pip install -r requirements.txt
+    ```
+    도커 지원 : 준비중.
+
 - 서버 실행 :
     
     ```bash
