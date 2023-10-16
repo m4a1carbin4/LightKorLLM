@@ -36,12 +36,14 @@ class Infer:
 
     def __infer_gen(self, x):
 
-        gened = self.model.generate(
-            **self.tokenizer(
+        input_token = self.tokenizer(
                 x,
                 return_tensors='pt',
                 return_token_type_ids=False
-            ).to(self.device),
+            ).to(self.device)
+
+        gened = self.model.generate(
+            **input_token,
             max_new_tokens=self.max_new_token,
             num_beams=self.num_beams,
             early_stopping=self.early_stopping,
@@ -49,6 +51,9 @@ class Infer:
             do_sample=True,
             eos_token_id=2,
         )
+
+        input_length = 1 if self.model.config.is_encoder_decoder else input_token.input_ids.shape[1]
+        gened = gened[:, input_length:]
 
         return (gened[0])
 
@@ -127,7 +132,6 @@ class Infer:
 
         print(gen_str)
 
-        gen_str = gen_str.replace("<s> "+infer_str,'')
         gen_str = gen_str.replace("</s>",'')
 
         if type == "infer":
