@@ -4,3 +4,4 @@ upload_only.py
 use_test.py
 auto-gptq-test.py
 lib/__pycache__
+venv
