@@ -8,15 +8,28 @@ sys.path.append(os.path.dirname(
 
 from Infer import Infer
 from GPTmodel import AutoGPTQ
+
+from kafka_control import LLM_KafkaControl
+
+
 from controll import apiControll
 from argparse import ArgumentParser
 from flask_ngrok2 import run_with_ngrok
 from flask import Flask, request
 from flask_restx import Api, Resource
 
+
 def main():
 
     parser = ArgumentParser()
+    parser.add_argument("--flask", action="store_true",
+                        help="whether use Flask_api")
+    parser.add_argument("--kafka", action="store_true",
+                        help="whether use Kafka")
+    parser.add_argument("--kafka_producer_topic", type=str,
+                        default=None, help="kafka_producer_topic")
+    parser.add_argument("--kafka_consumer_topic", type=str,
+                        default=None, help="kafka_consumer_topic")
     parser.add_argument("--quantized_model_dir", type=str,
                         default=None, help="main quantized_model_dir")
     parser.add_argument("--peft_lora_dir", type=str,
@@ -52,22 +65,30 @@ def main():
     main_infer = Infer(model=main_model.model, tokenizer=main_model.tokenizer, max_new_tokens=args.max_new_token,early_stopping=args.early_stopping, 
                        max_history=args.max_history, num_beams=args.num_beams,human_str=args.human_str,ai_str=args.ai_str,stop_str=args.stop_str,device=args.device)
 
-    app = Flask(__name__)
-    
-    api = Api(app)
+    if args.flask :
 
-    controll = apiControll(api=api,infer=main_infer)
+        app = Flask(__name__)
+        
+        api = Api(app)
 
-    if args.ngrock:
+        controll = apiControll(api=api,infer=main_infer)
 
-        if args.ngrock_token:
-            run_with_ngrok(app=app, auth_token=args.ngrock_token)
+        if args.ngrock:
+
+            if args.ngrock_token:
+                run_with_ngrok(app=app, auth_token=args.ngrock_token)
+            else:
+                run_with_ngrok(app=app)
+
+        app.run(debug=True, host='0.0.0.0', port=args.port,use_reloader=False)
+    elif args.kafka :
+        
+        if args.kafka_producer_topic == None or args.kafka_consumer_topic == None :
+            print("need to set kafka producer, comnsumer topic")
+            return 
         else:
-            run_with_ngrok(app=app)
-
-    app.run(debug=True, host='0.0.0.0', port=args.port,use_reloader=False)
-
-
+            kafka_main = LLM_KafkaControl(main_infer,broker=["localhost:9092", "localhost:9093", "localhost:9094"],topics=[args.kafka_producer_topic,args.kafka_consumer_topic])
+            kafka_main.receive_message()
 if __name__ == "__main__":
     import logging
 
