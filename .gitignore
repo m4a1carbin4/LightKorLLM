@@ -5,3 +5,5 @@ use_test.py
 auto-gptq-test.py
 lib/__pycache__
 venv
+/test_input.py
+/test_output.py

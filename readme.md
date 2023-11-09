@@ -50,7 +50,7 @@ LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 Auto
 - 서버 실행 :
     
     ```bash
-    python api/main.py --quantized_model_dir WGNW/llama-2-7b-ko-auto-gptq-full-v2 --early_stopping --max_new_token 256 --port 9091 --ngrock
+    python main.py --quantized_model_dir WGNW/llama-2-7b-ko-auto-gptq-full-v2 --early_stopping --max_new_token 256 --port 9091 --ngrock
     ```
     
 - 서버 상세 실행 옵션 :
