@@ -29,12 +29,14 @@ class Infer:
         self.ai_str = ai_str
         self.device = device
 
+
+        print(stop_str)
         stop_words = [stop_str]
 
         stop_words_ids = [self.tokenizer(stop_word, return_tensors='pt').to(self.device)['input_ids'].squeeze()[1:] for stop_word in stop_words]
         self.stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=stop_words_ids)])
 
-    def __infer_gen(self, x):
+    def infer_gen(self, x):
 
         input_token = self.tokenizer(
                 x,
@@ -126,7 +128,7 @@ class Infer:
 
         infer_str += f"\n\n{self.human_str}: {data['input']}\n\n{self.ai_str}:"
 
-        gen_token = self.__infer_gen(infer_str)
+        gen_token = self.infer_gen(infer_str)
 
         gen_str = self.tokenizer.decode(gen_token)
 

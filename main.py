@@ -53,7 +53,7 @@ def main():
                         help="String to represent user input (ex : ### 사용자)(default)")
     parser.add_argument("--ai_str", type=str, default="### AI",
                         help="String to represent AI output (ex  : ### AI)(default)")
-    parser.add_argument("--stop_str", type=str, default="### 사용자:",
+    parser.add_argument("--stop_str", type=str, default="### 선생님:",
                         help="String to stop generation (ex : ### 사용자)(default)")
 
     args = parser.parse_args()

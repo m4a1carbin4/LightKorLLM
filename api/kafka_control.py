@@ -51,7 +51,7 @@ class LLM_KafkaControl:
             for message in self.consumer:
                 
                 result_str, result_history = self.infer.text_gen(
-                    data=json.loads(message.value), type="infer")
+                    data=json.loads(message.value), type="chat")
                 
                 self.send_message({
                     "result": result_str,

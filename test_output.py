@@ -20,7 +20,7 @@ class MessageConsumer:
     def receive_message(self):
         try:
             for message in self.consumer:
-                print(message.value)
+                print(json.loads(message.value))
                 print(json.loads(message.value)["result"])
                 
                 print("\n")
@@ -32,6 +32,6 @@ class MessageConsumer:
 
 # 브로커와 토픽명을 지정한다.
 broker = ["localhost:9092", "localhost:9093", "localhost:9094"]
-topic = "LLM_output"
+topic = "test_llm"
 cs = MessageConsumer(broker, topic)
 cs.receive_message()
