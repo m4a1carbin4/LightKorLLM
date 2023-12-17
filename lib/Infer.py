@@ -31,9 +31,9 @@ class Infer:
 
 
         print(stop_str)
-        stop_words = [stop_str,"\n","\n\n","\n\n\n"]
+        stop_words = [stop_str,"###","선생님:","호시노:"]
 
-        stop_words_ids = [self.tokenizer(stop_word, return_tensors='pt').to(self.device)['input_ids'].squeeze()[1:] for stop_word in stop_words]
+        stop_words_ids = [self.tokenizer(stop_word, return_tensors='pt').to(self.device).squeeze() for stop_word in stop_words]
         self.stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=stop_words_ids)])
 
     def infer_gen(self, x):
