@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+cd LightKorLLM
+
 pyenv virtualenv 3.11 LightKorLLM
 
 pyenv activate LightKorLLM
