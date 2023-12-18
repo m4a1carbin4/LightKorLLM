@@ -61,6 +61,12 @@ LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 Auto
     docker run -it --net=host --name ${container_name} ${image_name}:${version}
     ```
 
+    ***주의 : 도커 스크립트의 경우 원칙적으로 apache kafka를 기반으로 동작하도록 설계되어 있음. 
+    flask 서버 사용을 원하는 경우 컨테이너를 종료하고 Flask api 서버를 수동으로 실행 시켜야함.***
+
+    ***또한 설정편의를 위해 --net=host 환경을 설정하였으나, 직접 수정하여 사용해도 무관.***
+
+
 - 서버 실행 :
     
     flask_restx 기반:
@@ -78,33 +84,46 @@ LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 Auto
 - 서버 상세 실행 옵션 :
     
     ```bash
-    usage: main.py [-h] [--quantized_model_dir QUANTIZED_MODEL_DIR] [--peft_lora_dir PEFT_LORA_DIR] [--device DEVICE] [--max_new_token MAX_NEW_TOKEN] [--num_beams NUM_BEAMS] [--max_history MAX_HISTORY] [--early_stopping]
-                   [--port PORT] [--ngrock] [--ngrock_token NGROCK_TOKEN] [--human_str HUMAN_STR] [--ai_str AI_STR] [--stop_str STOP_STR]
-    
-    optional arguments:
-      -h, --help            show this help message and exit
-      --quantized_model_dir QUANTIZED_MODEL_DIR
+    usage: main.py [-h] [--flask] [--kafka] [--kafka_producer_topic KAFKA_PRODUCER_TOPIC] [--kafka_consumer_topic KAFKA_CONSUMER_TOPIC] [--kafka_server KAFKA_SERVER]
+               [--quantized_model_dir QUANTIZED_MODEL_DIR] [--peft_lora_dir PEFT_LORA_DIR] [--device DEVICE] [--max_new_token MAX_NEW_TOKEN] [--num_beams NUM_BEAMS]
+               [--max_history MAX_HISTORY] [--early_stopping] [--port PORT] [--ngrock] [--ngrock_token NGROCK_TOKEN] [--human_str HUMAN_STR] [--ai_str AI_STR]
+
+    options:
+    -h, --help            show this help message and exit
+    --flask               whether use Flask_api
+    --kafka               whether use Kafka
+    --kafka_producer_topic KAFKA_PRODUCER_TOPIC
+                            kafka_producer_topic
+    --kafka_consumer_topic KAFKA_CONSUMER_TOPIC
+                            kafka_consumer_topic
+    --kafka_server KAFKA_SERVER
+                            ip or dns of kafka server (ex : localhost)(default)
+    --quantized_model_dir QUANTIZED_MODEL_DIR
                             main quantized_model_dir
-      --peft_lora_dir PEFT_LORA_DIR
+    --peft_lora_dir PEFT_LORA_DIR
                             (Optional) custom peft_lora_dir
-      --device DEVICE       (Optional) where to load model (Depending on the model cpu cannot be useable)
-      --max_new_token MAX_NEW_TOKEN
+    --device DEVICE       (Optional) where to load model (Depending on the model cpu cannot be useable)
+    --max_new_token MAX_NEW_TOKEN
                             for max new token
-      --num_beams NUM_BEAMS
+    --num_beams NUM_BEAMS
                             for setting beams
-      --max_history MAX_HISTORY
+    --max_history MAX_HISTORY
                             how many chat history used (default 0)
-      --early_stopping      whether use early_stopping
-      --port PORT           api server port (default 5989)
-      --ngrock              whether use ngrock
-      --ngrock_token NGROCK_TOKEN
+    --early_stopping      whether use early_stopping
+    --port PORT           api server port (default 5989)
+    --ngrock              whether use ngrock
+    --ngrock_token NGROCK_TOKEN
                             (Optional) ngrock_token
-      --human_str HUMAN_STR
+    --human_str HUMAN_STR
                             String to represent user input (ex : ### 사용자)(default)
-      --ai_str AI_STR       String to represent AI output (ex : ### AI)(default)
-      --stop_str STOP_STR   String to stop generation (ex : ### 사용자)(default)
+    --ai_str AI_STR       String to represent AI output (ex : ### AI)(default)
     ```
     
+    - flask : flask_restx 서버 실행 옵션.
+    - kafka : apache kafka 구동 옵션
+    - kafka_producer_topic : LLM inference 결과를 전달할 kafka producer 토픽
+    - kafka_consumer_topic : LLM inference 를 위한 입력값을 전달받을 kafka consumer 토픽
+    - kafka_server : kafka server url or ip (default:localhost)
     - quantized_model_dir : 양자화된 모델 경로 (hugging face 레포 또는 로컬 경로)
     - peft_lora_dir : PEFT 파인튜닝 사용시 해당 파인튜닝된 가중치에 대한 경로 (hugging face 레포 또는 로컬 경로)
     - device : 사용할 device 설정 (pytorch의 device 설정과 동일) : 기본적으로 cuda:0 환경 권장.
@@ -118,17 +137,6 @@ LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 Auto
     - ngrock_token : ngrock 토큰 설정 (더 긴 세션 유지 시간)
     - human_str : 사용자 입력 표기용 스트링 지정, # 하단 LLM Inference 확인 요망.
     - ai_str : LLM 결과 표기용 스트링 지정. # 하단 LLM Inference 확인 요망.
-    - stop_str : 생성 중단 스트링 지정. (답변 생성 도중 해당 스트링이 생성되는 경우 생성을 중단)
-
-## Flask API Documentation
-
-### base
-
-해당 API 서버는 LLM 모델을 통해 텍스트를 생성하고 생성된 텍스트를 반환하는 일련의 절차를 진행합니다.
-
-서버 설치와 관련된 사항의 경우 python 3.8.16 버전 이상에서 동작하는것을 권장하며.
-
-필요한 라이브러리의 경우 requirements.txt 를 통해 확인 가능합니다.
 
 ### LLM Inference
 
@@ -152,6 +160,67 @@ ex : 당신은 AI 챗봇입니다. 사용자에게 도움이 되고 유익한 �
 ```
 
 해당 구조를 통해 모델에 inference 하여 그 결과값을 리턴 합니다. 
+
+## apache Kafka mode Documentation
+
+### base
+
+JSON 형태의 메세지를 topic으로 전송하면 
+
+LightKorLLM이 해당 메세지에 대한 내용을 처리한 이유 
+
+consumer topic을 통해 결과를 JSON 형태의 메세지로 전달.
+
+### LightKorLLM consumer (input)
+
+메세지 형태 (예시):
+
+```json
+{
+    "instruction":{
+        "command":"당신은 AI 챗봇입니다. 사용자에게 도움이 되고 유익한 내용을 제공해야합니다. 답변은 길고 자세하며 친절한 설명을 덧붙여서 작성하세요."
+    },
+    "input":"오늘 기분이 우울한데 음악 리스트 추천해줘.",
+    "history": {
+        "count": 0,
+        "history": [
+        ]
+    }
+}
+```
+
+### LightKorLLM producer (output)
+
+메세지 형태 (예시):
+
+```json
+{
+    "result": " 우울한 감정을 극복하기 위해 음악은 많은 도움이 됩니다. 몇 가지 추천곡을 드리겠습니다.\n\n1. The Beatles - Hey Jude\n\n이 곡은 The Beatles의 명곡 중 하나입니다. 이 곡은 감정적으로 안정된 상태를 유지하며 우울함을 덜어주는 긍정적인 노래입니다.\n\n2. Adele - Someone Like You\n\nAdele는 그녀의 명곡 중 하나인 Someone Like You로 많은 사랑과 존경을 받고 있습니다. 이 곡은 사랑과 긍정적인 감정을 상기시키고 우울함을 극복하는데 도움이 됩니다.\n\n3. Coldplay - Fragments\n\nColdplay의 Fragments는 슬픔과 우울함을 다룬 감정의 변화와 회복을 그린 노래입니다. 이 곡이 우울한 감정을 치유하는데 도움을 줄 것입니다.\n\n4. Lorraine Walton - We Will Rock Again\n\nLorraine Walton은 미국의 뮤지션으로, 이 곡은 그들의 1999년 데뷔 앨범의 트랙입니다. 이 곡은 어려운 시기를 겪은 후의 회복을 다룬 감동적인 노래입니다.\n\n5. Mariah Carey - Without You\n\nMariah Carey는 세계적인 보컬리스트로 그녀",
+    "history": {
+        "count": 1,
+        "history": [
+            {
+                "type": "### 사용자",
+                "str": "오늘 기분이 우울한데 음악 리스트 추천해줘."
+            },
+            {
+                "type": "### AI",
+                "str": " 우울한 감정을 극복하기 위해 음악은 많은 도움이 됩니다. 몇 가지 추천곡을 드리겠습니다.\n\n1. The Beatles - Hey Jude\n\n이 곡은 The Beatles의 명곡 중 하나입니다. 이 곡은 감정적으로 안정된 상태를 유지하며 우울함을 덜어주는 긍정적인 노래입니다.\n\n2. Adele - Someone Like You\n\nAdele는 그녀의 명곡 중 하나인 Someone Like You로 많은 사랑과 존경을 받고 있습니다. 이 곡은 사랑과 긍정적인 감정을 상기시키고 우울함을 극복하는데 도움이 됩니다.\n\n3. Coldplay - Fragments\n\nColdplay의 Fragments는 슬픔과 우울함을 다룬 감정의 변화와 회복을 그린 노래입니다. 이 곡이 우울한 감정을 치유하는데 도움을 줄 것입니다.\n\n4. Lorraine Walton - We Will Rock Again\n\nLorraine Walton은 미국의 뮤지션으로, 이 곡은 그들의 1999년 데뷔 앨범의 트랙입니다. 이 곡은 어려운 시기를 겪은 후의 회복을 다룬 감동적인 노래입니다.\n\n5. Mariah Carey - Without You\n\nMariah Carey는 세계적인 보컬리스트로 그녀"
+            }
+        ]
+    }
+}
+```
+
+## Flask API Documentation
+
+### base
+
+해당 API 서버는 LLM 모델을 통해 텍스트를 생성하고 생성된 텍스트를 반환하는 일련의 절차를 진행합니다.
+
+서버 설치와 관련된 사항의 경우 python 3.8.16 버전 이상에서 동작하는것을 권장하며.
+
+필요한 라이브러리의 경우 requirements.txt 를 통해 확인 가능합니다.
 
 ### API call :
 
