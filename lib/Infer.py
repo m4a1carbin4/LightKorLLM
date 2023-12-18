@@ -2,23 +2,34 @@
 
 from transformers import StoppingCriteria, StoppingCriteriaList
 import torch
+    
+class _SentinelTokenStoppingCriteria(StoppingCriteria):
 
-class StoppingCriteriaSub(StoppingCriteria):
+    def __init__(self, sentinel_token_ids: torch.LongTensor,
+                 starting_idx: int):
+        StoppingCriteria.__init__(self)
+        self.sentinel_token_ids = sentinel_token_ids
+        self.starting_idx = starting_idx
 
-    def __init__(self, stops = [], encounters=1):
-        super().__init__()
-        self.stops = [stop for stop in stops]
+    def __call__(self, input_ids: torch.LongTensor,
+                 _scores: torch.FloatTensor) -> bool:
+        for sample in input_ids:
+            trimmed_sample = sample[self.starting_idx:]
+            # Can't unfold, output is still too tiny. Skip.
+            if trimmed_sample.shape[-1] < self.sentinel_token_ids[0].shape[-1]:
+                continue
 
-    def __call__(self, input_ids:torch.LongTensor, scores:torch.FloatTensor):
-        for stop in self.stops:
-            if torch.all((stop == input_ids[0][-len(stop):])).item():
-                return True
-
+            for sentinel_token_id in self.sentinel_token_ids:
+                for window in trimmed_sample.unfold(
+                        0, sentinel_token_id.shape[-1], 1):
+                    if torch.all(torch.eq(sentinel_token_id, window)):
+                        print(f"triger work!")
+                        return True
         return False
 
 class Infer:
 
-    def __init__(self, model, tokenizer, max_new_tokens, early_stopping, max_history, num_beams, human_str, ai_str, stop_str, device):
+    def __init__(self, model, tokenizer, max_new_tokens, early_stopping, max_history, num_beams, human_str, ai_str, device):
         self.model = model
         self.tokenizer = tokenizer
         self.max_new_token = max_new_tokens
@@ -28,13 +39,13 @@ class Infer:
         self.human_str = human_str
         self.ai_str = ai_str
         self.device = device
-
-
-        print(stop_str)
-        stop_words = [stop_str,"###","선생님:","호시노:"]
-
-        stop_words_ids = [self.tokenizer(stop_word, return_tensors='pt').to(self.device).squeeze() for stop_word in stop_words]
-        self.stopping_criteria = StoppingCriteriaList([StoppingCriteriaSub(stops=stop_words_ids)])
+        
+        self.stopping_criteria_list = [
+            self.tokenizer(
+                x,
+                add_special_tokens=False,
+                return_tensors="pt",
+            ).input_ids.to("cuda")[:,1:] for x in ["\n\n### "+self.human_str+":","\n\n","\n\n"+self.human_str+":"]]
 
     def infer_gen(self, x):
 
@@ -43,12 +54,18 @@ class Infer:
                 return_tensors='pt',
                 return_token_type_ids=False
             ).to(self.device)
+        
+        self.stopping_criteria = StoppingCriteriaList([
+        _SentinelTokenStoppingCriteria(
+            sentinel_token_ids=self.stopping_criteria_list,
+            starting_idx=input_token.input_ids.shape[-1])
+        ])
 
         gened = self.model.generate(
             **input_token,
             max_new_tokens=self.max_new_token,
             num_beams=self.num_beams,
-            early_stopping=self.early_stopping,
+            #early_stopping=self.early_stopping,
             stopping_criteria=self.stopping_criteria,
             do_sample=True,
             eos_token_id=2,
@@ -80,7 +97,7 @@ class Infer:
 
         for obj in history_tmp:
 
-            infer_str += f"\n\n {obj['type']}: {obj['str']}"
+            infer_str += f"\n\n### {obj['type']}: {obj['str']}"
 
         return infer_str
     
@@ -126,9 +143,11 @@ class Infer:
         elif type == "infer":
             infer_str = self.__instruction_appender(instruction=data["instruction"])
 
-        infer_str += f"\n\n{self.human_str}: {data['input']}\n\n{self.ai_str}:"
+        infer_str += f"\n\n### {self.human_str}: {data['input']}\n\n### {self.ai_str}:"
 
         gen_token = self.infer_gen(infer_str)
+
+        print(gen_token)
 
         gen_str = self.tokenizer.decode(gen_token)
 

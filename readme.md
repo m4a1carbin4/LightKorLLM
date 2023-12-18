@@ -39,18 +39,40 @@ LightKorLLM 프로젝트는 기존 LLaMA, alpaca 계열의 LLM 모델들을 Auto
 - 서버 환경설정 :
     python 3.8.16 이상 사용 권장.
 
-    cuda 11.8 사용 권장.
+    cuda 11.8 이상 사용 권장.
 
     의존성 설치 :
     ```bash
     pip install -r requirements.txt
     ```
-    도커 지원 : 준비중.
+    도커 지원 : 
+
+    자동화 스크립트 제공 (주의 : NVIDIA Container Toolkit 지원 필요.)
+
+    ```bash
+    chmod +x ./start.sh
+    ./start.sh $human_str $ai_str $producer_topic $consumer_topic $kafka_server
+    ```
+
+    또는 Dockerfile을 통해 직접 빌드 후 사용 가능 (예시).
+
+    ```bash
+    docker build --build-arg kafka_producer_topic="$producer_topic" --build-arg kafka_consumer_topic="$consumer_topic" --build-arg kafka_server="$kafka_server" --build-arg ai_str="$ai_str" --build-arg human_str="$human_str" --tag ${mage_name}:${version} .
+    docker run -it --net=host --name ${container_name} ${image_name}:${version}
+    ```
 
 - 서버 실행 :
     
+    flask_restx 기반:
+
     ```bash
-    python main.py --quantized_model_dir WGNW/llama-2-7b-ko-auto-gptq-full-v2 --early_stopping --max_new_token 256 --port 9091 --ngrock
+    python main.py --flask --quantized_model_dir WGNW/llama-2-7b-ko-auto-gptq-full-v2 --early_stopping --max_new_token 256 --port 9091 --ngrock
+    ```
+
+    apache kafka 기반:
+
+    ```bash
+    python main.py --kafka --kafka_producer_topic $producer_topic --kafka_consumer_topic $consumer_topic --kafka_server $kafka_server --quantized_model_dir WGNW/llama-2-7b-ko-auto-gptq-full-v2 --early_stopping --max_new_token 256 --human_str "$human_str" --ai_str "$ai_str"
     ```
     
 - 서버 상세 실행 옵션 :
