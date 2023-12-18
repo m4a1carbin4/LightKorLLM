@@ -29,6 +29,8 @@ def main():
                         default=None, help="kafka_producer_topic")
     parser.add_argument("--kafka_consumer_topic", type=str,
                         default=None, help="kafka_consumer_topic")
+    parser.add_argument("--kafka_server", type=str, default="localhost",
+                        help="ip or dns of kafka server (ex  : localhost)(default)")
     parser.add_argument("--quantized_model_dir", type=str,
                         default=None, help="main quantized_model_dir")
     parser.add_argument("--peft_lora_dir", type=str,
@@ -49,12 +51,10 @@ def main():
                         help="whether use ngrock")
     parser.add_argument("--ngrock_token", type=str, default=None,
                         help="(Optional) ngrock_token")
-    parser.add_argument("--human_str", type=str, default="### 사용자",
+    parser.add_argument("--human_str", type=str, default="사용자",
                         help="String to represent user input (ex : ### 사용자)(default)")
-    parser.add_argument("--ai_str", type=str, default="### AI",
+    parser.add_argument("--ai_str", type=str, default="AI",
                         help="String to represent AI output (ex  : ### AI)(default)")
-    parser.add_argument("--stop_str", type=str, default="### 선생님:",
-                        help="String to stop generation (ex : ### 사용자)(default)")
 
     args = parser.parse_args()
 
@@ -62,7 +62,7 @@ def main():
                           args.peft_lora_dir, args.device)
 
     main_infer = Infer(model=main_model.model, tokenizer=main_model.tokenizer, max_new_tokens=args.max_new_token,early_stopping=args.early_stopping, 
-                       max_history=args.max_history, num_beams=args.num_beams,human_str=args.human_str,ai_str=args.ai_str,stop_str=args.stop_str,device=args.device)
+                       max_history=args.max_history, num_beams=args.num_beams,human_str=args.human_str,ai_str=args.ai_str,device=args.device)
 
     if args.flask :
 
@@ -86,7 +86,7 @@ def main():
             print("need to set kafka producer, comnsumer topic")
             return 
         else:
-            kafka_main = LLM_KafkaControl(main_infer,broker=["localhost:9092", "localhost:9093", "localhost:9094"],topics=[args.kafka_producer_topic,args.kafka_consumer_topic])
+            kafka_main = LLM_KafkaControl(main_infer,broker=[args.kafka_server+":9092", args.kafka_server+":9093", args.kafka_server+":9094"],topics=[args.kafka_producer_topic,args.kafka_consumer_topic])
             kafka_main.receive_message()
 if __name__ == "__main__":
     import logging
