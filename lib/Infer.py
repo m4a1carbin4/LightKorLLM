@@ -45,7 +45,7 @@ class Infer:
                 x,
                 add_special_tokens=False,
                 return_tensors="pt",
-            ).input_ids.to("cuda")[:,1:] for x in ["\n\n### "+self.human_str+":","\n\n","\n\n"+self.human_str+":"]]
+            ).input_ids.to("cuda")[:,1:] for x in ["\n\n### "+self.human_str+":","\n\n","\n\n"+self.human_str+":","### "+self.human_str+":",self.human_str+":"]]
 
     def infer_gen(self, x):
 
